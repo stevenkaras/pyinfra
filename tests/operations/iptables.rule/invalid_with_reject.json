@@ -1,0 +1,10 @@
+{
+    "args": ["INPUT", "ACCEPT"],
+    "kwargs": {
+        "reject_with": "icmp-host-unreachable"
+    },
+    "exception": {
+        "name": "OperationError",
+        "message": "iptables only supports reject_with with the REJECT jump (jump=ACCEPT)"
+    }
+}

@@ -21,6 +21,9 @@ IPTABLES_ARGS = {
     '--to-destination': 'to_destination',
     '--to-source': 'to_source',
     '--to-ports': 'to_ports',
+
+    # rejection flags
+    '--reject-with': 'reject_with',
 }
 
 

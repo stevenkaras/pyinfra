@@ -73,7 +73,7 @@ def rule(
     in_interface=None, not_in_interface=None,
     out_interface=None, not_out_interface=None,
     # After-rule arguments
-    to_destination=None, to_source=None, to_ports=None, log_prefix=None,
+    to_destination=None, to_source=None, to_ports=None, log_prefix=None, reject_with=None,
     # Extras and extra shortcuts
     destination_port=None, source_port=None, extras='',
     state=None, host=None,
@@ -179,6 +179,13 @@ def rule(
             '(jump={0})'.format(jump),
         )
 
+    # --reject-with is only supported with jump=REJECT
+    if reject_with and jump != 'REJECT':
+        raise OperationError(
+            'iptables only supports reject_with with the REJECT jump '
+            '(jump={0})'.format(jump),
+        )
+
     definition = {
         'chain': chain,
         'jump': jump,
@@ -200,7 +207,7 @@ def rule(
         'to_destination': to_destination,
         'to_source': to_source,
         'to_ports': to_ports,
-        'extras': extras_set,
+        'reject_with': reject_with,
     }
 
     definition = {
@@ -291,6 +298,9 @@ def rule(
 
         if to_ports:
             args.extend(('--to-ports', to_ports))
+
+        if reject_with:
+            args.extend(('--reject-with', reject_with))
 
         # Build the final iptables command
         yield ' '.join(args)
