@@ -85,6 +85,29 @@ def print_state_operations(state):
         ), err=True)
 
 
+def print_commands(state):
+    for host, ops in six.iteritems(state.ops):
+        host_meta = state.meta[host]
+        host_ops = [
+            ops[op_hash]
+            for op_hash in state.get_op_order()
+            if op_hash in host_meta['op_hashes']
+            and ops[op_hash]['commands']
+        ]
+        if host_meta['commands'] == 0:
+            continue
+
+        click.echo(f"{host} -> {len(host_ops)} ops {host_meta['commands']} commands", err=True)
+
+        for op in host_ops:
+            if len(op['commands']) == 0:
+                continue
+
+            click.echo(f"{host} --> {op['global_kwargs']['name']}")
+            for command in op['commands']:
+                click.echo(f"{host} ---> {'sudo ' if op['global_kwargs']['sudo'] else ''}{command}")
+
+
 def print_groups_by_comparison(print_items, comparator=lambda item: item[0]):
     items = []
     last_name = None

@@ -38,6 +38,7 @@ from .exceptions import (
 from .inventory import make_inventory
 from .log import setup_logging
 from .prints import (
+    print_commands,
     print_facts,
     print_facts_list,
     print_inventory,
@@ -594,6 +595,8 @@ def _main(
 
     # Run the operations we generated with the deploy file
     if dry:
+        click.echo('--> Commands to run:', err=True)
+        print_commands(state)
         _exit()
 
     if not quiet:
