@@ -5,11 +5,11 @@
         "destination_port": 8080,
         "source_port": 80,
         "protocol": "tcp",
-        "source": "0.0.0.0",
+        "source": "192.168.0.0/16",
         "in_interface": "eth0",
         "out_interface": "eth1",
         "not_protocol": "udp",
-        "not_source": "192.168.1.0/24",
+        "not_source": "192.168.1.7",
         "not_in_interface": "eth10",
         "not_out_interface": "eth10"
     },
@@ -19,6 +19,6 @@
         }
     },
     "commands": [
-        "iptables -t nat -A PREROUTING -p tcp -s 0.0.0.0 -i eth0 -o eth1 ! -p udp ! -s 192.168.1.0/24 ! -i eth10 ! -o eth10 --dport 8080 --sport 80 -m tcp -j OUTPUT"
+        "iptables -t nat -A PREROUTING -p tcp -s 192.168.0.0/16 -i eth0 -o eth1 ! -p udp ! -s 192.168.1.7/32 ! -i eth10 ! -o eth10 --dport 8080 --sport 80 -m tcp -j OUTPUT"
     ]
 }

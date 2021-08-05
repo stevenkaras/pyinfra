@@ -4,7 +4,7 @@
         "version": 6,
         "table": "nat",
         "protocol": "tcp",
-        "source": "0.0.0.0"
+        "source": "2001:db8::"
     },
     "facts": {
         "iptables.Ip6tablesRules": {
@@ -12,6 +12,6 @@
         }
     },
     "commands": [
-        "ip6tables -t nat -A PREROUTING -p tcp -s 0.0.0.0 -j OUTPUT"
+        "ip6tables -t nat -A PREROUTING -p tcp -s 2001:db8::/128 -m tcp -j OUTPUT"
     ]
 }

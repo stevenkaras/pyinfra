@@ -5,6 +5,7 @@ from pyinfra.api import FactBase
 # Mapping for iptables code arguments to variable names
 IPTABLES_ARGS = {
     '-A': 'chain',
+    '-D': 'chain',
     '-j': 'jump',
 
     # Boolean matches

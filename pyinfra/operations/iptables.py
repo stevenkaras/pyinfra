@@ -13,6 +13,7 @@ from pyinfra.facts.iptables import (
     Ip6tablesRules,
     IptablesChains,
     IptablesRules,
+    parse_iptables_rule,
 )
 
 
@@ -136,17 +137,13 @@ def rule(
     if source_port:
         extras = '{0} --sport {1}'.format(extras, source_port)
 
-    # Convert the extras string into a set to enable comparison with the fact
-    extras_set = set(extras.split())
-
     # When protocol is set, the extension is automagically added by iptables (which shows
     # in iptables-save): http://ipset.netfilter.org/iptables-extensions.man.html
-    if protocol:
-        extras_set.add('-m')
-        extras_set.add(protocol)
+    if protocol and '-m {0}'.format(protocol) not in extras:
+        extras = '{0} -m {1}'.format(extras, protocol)
 
     # --dport and --sport do not work without a protocol (because they need -m [tcp|udp]
-    elif destination_port or source_port:
+    if not protocol and (destination_port or source_port):
         raise OperationError(
             'iptables cannot filter by destination_port/source_port without a protocol',
         )
@@ -186,42 +183,18 @@ def rule(
             '(jump={0})'.format(jump),
         )
 
-    definition = {
-        'chain': chain,
-        'jump': jump,
+    def _normalize_cidr(cidr, version):
+        if version == 4 and cidr and '/' not in cidr:
+            return '{0}/32'.format(cidr)
+        elif version == 6 and cidr and '/' not in cidr:
+            return '{0}/128'.format(cidr)
+        else:
+            return cidr
 
-        'protocol': protocol,
-        'source': source,
-        'destination': destination,
-        'in_interface': in_interface,
-        'out_interface': out_interface,
-
-        'not_protocol': not_protocol,
-        'not_source': not_source,
-        'not_destination': not_destination,
-        'not_in_interface': not_in_interface,
-        'not_out_interface': not_out_interface,
-
-        # These go *after* the jump argument
-        'log_prefix': log_prefix,
-        'to_destination': to_destination,
-        'to_source': to_source,
-        'to_ports': to_ports,
-        'reject_with': reject_with,
-    }
-
-    definition = {
-        key: (
-            '{0}/32'.format(value)
-            if (
-                key in ('source', 'not_source', 'destination', 'not_destination')
-                and '/' not in value
-            )
-            else value
-        )
-        for key, value in six.iteritems(definition)
-        if value
-    }
+    source = _normalize_cidr(source, version)
+    not_source = _normalize_cidr(not_source, version)
+    destination = _normalize_cidr(destination, version)
+    not_destination = _normalize_cidr(not_destination, version)
 
     rules = (
         host.get_fact(IptablesRules, table=table)
@@ -229,83 +202,66 @@ def rule(
         else host.get_fact(Ip6tablesRules, table=table)
     )
 
-    action = None
+    command = [
+        'iptables' if version == 4 else 'ip6tables',
+        # Add the table
+        '-t', table,
+    ]
 
-    # Definition doesn't exist and we want it
+    # build the action to parse and check if it already exists
     if present:
-        if definition not in rules:
-            action = '-A' if append else '-I'
-        else:
-            host.noop('iptables {0} rule exists'.format(chain))
+        action = '-A' if append else '-I'
+    else:
+        action = '-D'
+
+    args = [
+        # Add the action and target chain
+        action, chain,
+    ]
+
+    def add_args(arg_flags, arg):
+        if not arg:
             return
 
-    # Definition exists and we don't want it
-    if not present:
-        if definition in rules:
-            action = '-D'
+        if isinstance(arg_flags, (tuple, list)):
+            args.extend(arg_flags)
+        else:
+            args.append(arg_flags)
+
+        args.append(arg)
+
+    add_args('-p', protocol)
+    add_args('-s', source)
+    add_args('-i', in_interface)
+    add_args('-o', out_interface)
+    add_args(('!', '-p'), not_protocol)
+    add_args(('!', '-s'), not_source)
+    add_args(('!', '-i'), not_in_interface)
+    add_args(('!', '-o'), not_out_interface)
+    add_args((), extras.strip())
+    add_args('-j', jump)
+    add_args('--log-prefix', log_prefix)
+    add_args('--to-destination', to_destination)
+    add_args('--to-source', to_source)
+    add_args('--to-ports', to_ports)
+    add_args('--reject-with', reject_with)
+
+    definition = parse_iptables_rule(' '.join(args))
+    command = ' '.join(command + args)
+
+    print(f"DEBUG: {definition=}\n\n{rules=}")
+
+    if definition in rules:
+        if present:
+            host.noop('iptables {0} rule exists'.format(chain))
+            return
+        else:
+            yield command
+            rules.remove(definition)
+    else:
+        if present:
+            yield command
+            rules.append(definition)
         else:
             host.noop('iptables {0} rule does not exists'.format(chain))
             return
-
-    # Are we adding/removing a rule? Lets build it
-    if action:
-        args = [
-            'iptables' if version == 4 else 'ip6tables',
-            # Add the table
-            '-t', table,
-            # Add the action and target chain
-            action, chain,
-        ]
-
-        if protocol:
-            args.extend(('-p', protocol))
-
-        if source:
-            args.extend(('-s', source))
-
-        if in_interface:
-            args.extend(('-i', in_interface))
-
-        if out_interface:
-            args.extend(('-o', out_interface))
-
-        if not_protocol:
-            args.extend(('!', '-p', not_protocol))
-
-        if not_source:
-            args.extend(('!', '-s', not_source))
-
-        if not_in_interface:
-            args.extend(('!', '-i', not_in_interface))
-
-        if not_out_interface:
-            args.extend(('!', '-o', not_out_interface))
-
-        if extras:
-            args.append(extras.strip())
-
-        # Add the jump
-        args.extend(('-j', jump))
-
-        if log_prefix:
-            args.extend(('--log-prefix', log_prefix))
-
-        if to_destination:
-            args.extend(('--to-destination', to_destination))
-
-        if to_source:
-            args.extend(('--to-source', to_source))
-
-        if to_ports:
-            args.extend(('--to-ports', to_ports))
-
-        if reject_with:
-            args.extend(('--reject-with', reject_with))
-
-        # Build the final iptables command
-        yield ' '.join(args)
-
-        if action == '-D':
-            rules.remove(definition)
-        else:
-            rules.append(definition)
