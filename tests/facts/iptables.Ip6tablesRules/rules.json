@@ -11,7 +11,8 @@
             "protocol": "tcp",
             "in_interface": "eth0",
             "to_destination": "2101::2:8080",
-            "jump": "DNAT"
+            "jump": "DNAT",
+            "extras": ["-m", "tcp"]
         },
         {
             "chain": "OUTPUT",

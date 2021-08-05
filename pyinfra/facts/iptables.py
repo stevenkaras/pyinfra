@@ -80,6 +80,11 @@ def parse_iptables_rule(line):
     if 'extras' in definition:
         definition['extras'] = set(definition['extras'])
 
+    # Some variants of iptables-save don't add protocols as modules (e.g. iptables 1.6.1 on ubuntu)
+    # Ensure it's there to be symmetric with similar handling in the operation
+    if 'protocol' in definition:
+        definition.setdefault('extras', set()).update(set(('-m', definition['protocol'])))
+
     return definition
 
 
