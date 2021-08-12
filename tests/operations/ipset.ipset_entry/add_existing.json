@@ -1,0 +1,25 @@
+{
+    "args": ["personal-allowlist", "192.0.2.0/24"],
+    "kwargs": {
+        "extras": "comment \"TEST-NET-1\""
+    },
+    "facts": {
+        "ipset.IpsetEntries": {
+            "set_name=personal-allowlist": {
+                "192.0.2.0/24": {
+                    "setname": "personal-allowlist",
+                    "entry": "192.0.2.0/24",
+                    "extras": "comment \"TEST-NET-1\""
+                },
+                "198.51.100.105": {
+                    "setname": "personal-allowlist",
+                    "entry": "198.51.100.105",
+                    "extras": "comment \"Specific IP in TEST-NET-2\""
+                }
+            }
+        }
+    },
+    "commands": [
+    ],
+    "noop_description": "ipset entry 192.0.2.0/24 already in personal-allowlist"
+}

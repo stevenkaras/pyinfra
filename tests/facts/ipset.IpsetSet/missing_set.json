@@ -1,0 +1,10 @@
+{
+    "command": "ipset list does-not-exist -terse || if [ $? = 1 ]; then :; fi",
+    "arg": "does-not-exist",
+    "requires_command": "ipset",
+    "output": [
+        "The set with the given name does not exist"
+    ],
+    "fact":  {
+    }
+}

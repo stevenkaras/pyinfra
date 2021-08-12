@@ -1,0 +1,25 @@
+{
+    "command": "ipset list personal-allowlist -terse || if [ $? = 1 ]; then :; fi",
+    "arg": "personal-allowlist",
+    "requires_command": "ipset",
+    "output": [
+        "Name: personal-allowlist",
+        "Type: hash:net",
+        "Revision: 6",
+        "Header: family inet hashsize 1024 maxelem 65536 comment",
+        "Size in memory: 562",
+        "References: 0",
+        "Number of entries: 2"
+    ],
+    "fact":  {
+        "personal-allowlist": {
+            "name": "personal-allowlist",
+            "type": "hash:net",
+            "revision": 6,
+            "header": "family inet hashsize 1024 maxelem 65536 comment",
+            "memory_size": 562,
+            "references": 0,
+            "num_entries": 2
+        }
+    }
+}

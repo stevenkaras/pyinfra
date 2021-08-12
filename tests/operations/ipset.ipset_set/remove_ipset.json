@@ -1,0 +1,22 @@
+{
+    "args": ["personal-allowlist"],
+    "kwargs": {
+        "present": false
+    },
+    "facts": {
+        "ipset.IpsetSet": {
+            "personal-allowlist": {
+                "name": "personal-allowlist",
+                "type": "hash:net",
+                "revision": 6,
+                "header": "family inet hashsize 1024 maxelem 65536 comment",
+                "memory_size": 562,
+                "references": 0,
+                "num_entries": 2
+            }
+        }
+    },
+    "commands": [
+        "ipset destroy personal-allowlist"
+    ]
+}

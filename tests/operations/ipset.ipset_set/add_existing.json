@@ -1,0 +1,22 @@
+{
+    "args": ["personal-allowlist"],
+    "kwargs": {
+        "extras": "comment"
+    },
+    "facts": {
+        "ipset.IpsetSet": {
+            "personal-allowlist": {
+                "name": "personal-allowlist",
+                "type": "hash:net",
+                "revision": 6,
+                "header": "family inet hashsize 1024 maxelem 65536 comment",
+                "memory_size": 562,
+                "references": 0,
+                "num_entries": 2
+            }
+        }
+    },
+    "commands": [
+    ],
+    "noop_description": "ipset personal-allowlist exists"
+}

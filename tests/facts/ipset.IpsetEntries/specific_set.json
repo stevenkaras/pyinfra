@@ -1,0 +1,22 @@
+{
+    "command": "ipset list personal-allowlist -output save 2>/dev/null; if [ $? = 1 ]; then :; fi",
+    "arg": "personal-allowlist",
+    "requires_command": "ipset",
+    "output": [
+        "create personal-allowlist hash:net family inet hashsize 1024 maxelem 65536 comment",
+        "add personal-allowlist 192.0.2.0/24 comment \"TEST-NET-1\"",
+        "add personal-allowlist 198.51.100.105 comment \"Specific IP in TEST-NET-2\""
+    ],
+    "fact":  {
+        "192.0.2.0/24": {
+            "setname": "personal-allowlist",
+            "entry": "192.0.2.0/24",
+            "extras": "comment \"TEST-NET-1\""
+        },
+        "198.51.100.105": {
+            "setname": "personal-allowlist",
+            "entry": "198.51.100.105",
+            "extras": "comment \"Specific IP in TEST-NET-2\""
+        }
+    }
+}

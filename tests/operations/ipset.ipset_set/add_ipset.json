@@ -1,0 +1,13 @@
+{
+    "args": ["personal-allowlist"],
+    "kwargs": {
+        "extras": "comment"
+    },
+    "facts": {
+        "ipset.IpsetSet": {
+        }
+    },
+    "commands": [
+        "ipset create personal-allowlist hash:net comment"
+    ]
+}

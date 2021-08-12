@@ -1,0 +1,41 @@
+{
+    "command": "ipset list -terse",
+    "requires_command": "ipset",
+    "output": [
+        "Name: personal-allowlist",
+        "Type: hash:net",
+        "Revision: 6",
+        "Header: family inet hashsize 1024 maxelem 65536 comment",
+        "Size in memory: 562",
+        "References: 0",
+        "Number of entries: 2",
+        "",
+        "Name: internal-allowlist",
+        "Type: hash:net",
+        "Revision: 6",
+        "Header: family inet hashsize 1024 maxelem 65536 comment",
+        "Size in memory: 466",
+        "References: 0",
+        "Number of entries: 1"
+    ],
+    "fact":  {
+        "personal-allowlist": {
+            "name": "personal-allowlist",
+            "type": "hash:net",
+            "revision": 6,
+            "header": "family inet hashsize 1024 maxelem 65536 comment",
+            "memory_size": 562,
+            "references": 0,
+            "num_entries": 2
+        },
+        "internal-allowlist": {
+            "name": "internal-allowlist",
+            "type": "hash:net",
+            "revision": 6,
+            "header": "family inet hashsize 1024 maxelem 65536 comment",
+            "memory_size": 466,
+            "references": 0,
+            "num_entries": 1
+        }
+    }
+}
