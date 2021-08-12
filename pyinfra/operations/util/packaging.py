@@ -47,7 +47,7 @@ def _quote_package_spec(
     return package_specs
 
 
-def _issue_commands(command, specs, rollup_commands=False):
+def _issue_commands(command: str, specs, rollup_commands=False):
     if not specs:
         return
 
@@ -56,6 +56,17 @@ def _issue_commands(command, specs, rollup_commands=False):
     else:
         for package_spec in specs:
             yield f"{command} {package_spec}"
+
+
+def _issue_noops(host, packages, present=True):
+    for package in packages:
+        if isinstance(package, tuple):
+            package = f"{package[0]} {package[1]}"
+
+        if present:
+            host.noop(f"package {package} already installed")
+        else:
+            host.noop(f"package {package} is not installed")
 
 
 def ensure_single_packages(
@@ -128,11 +139,7 @@ def ensure_single_packages(
         diff_packages, noop_packages = noop_packages, diff_packages
 
     # Emit noop messages
-    for package_name, package_version in noop_packages:
-        if present:
-            host.noop(f"package {package_name} {package_version} already installed")
-        else:
-            host.noop(f"package {package_name} {package_version} is not installed")
+    _issue_noops(host, noop_packages, present=present)
 
     # figure out the quoting
     diff_specs = _quote_package_spec(diff_packages, command_version_join)
@@ -218,11 +225,7 @@ def ensure_multi_packages(
         diff_packages, noop_packages = noop_packages, diff_packages
 
     # Emit noop messages
-    for package_name, package_version in noop_packages:
-        if present:
-            host.noop(f"package {package_name} {package_version} already installed")
-        else:
-            host.noop(f"package {package_name} {package_version} is not installed")
+    _issue_noops(host, noop_packages, present=present)
 
     # figure out the quoting
     diff_specs = _quote_package_spec(diff_packages, command_version_join)
@@ -278,11 +281,7 @@ def ensure_versionless_packages(
     if not present:
         diff_packages, noop_packages = noop_packages, diff_packages
 
-    for package in noop_packages:
-        if present:
-            host.noop(f"package {package} already installed")
-        else:
-            host.noop(f"package {package} not installed")
+    _issue_noops(host, noop_packages, present=present)
 
     diff_specs = [shlex.quote(package) for package in diff_packages]
 
