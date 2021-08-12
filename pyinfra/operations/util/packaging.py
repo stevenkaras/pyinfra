@@ -1,13 +1,300 @@
 from __future__ import unicode_literals
 
 import six
+import shlex
 
 from six import StringIO
 from six.moves import shlex_quote
 from six.moves.urllib.parse import urlparse
 
+from typing import Union
+
 from pyinfra.facts.files import File
 from pyinfra.facts.rpm import RpmPackage
+
+
+def parse_package_version(
+    package: str, version_join: str = "=", latest: str = "latest"
+) -> tuple[str, str]:
+    """
+    Extracts a package version from a package string
+
+    If the version is not specified, it will return "latest" as the version
+    """
+    package_spec = package.rsplit(version_join, 1)
+    if len(package_spec) == 1:
+        package_name = package_spec[0]
+        package_version = latest
+    else:
+        package_name, package_version = package_spec
+    return package_name, package_version
+
+
+def _quote_package_spec(
+    packages: list[tuple[str, str]], command_version_join: str
+) -> list[str]:
+    package_specs = []
+    for package_name, package_version in packages:
+        if not package_version:
+            package_spec = shlex.quote(package_name)
+        elif command_version_join == " ":
+            package_spec = f"{shlex.quote(package_name)} {shlex.quote(package_version)}"
+        else:
+            package_spec = shlex.quote(
+                command_version_join.join((package_name, package_version))
+            )
+        package_specs.append(package_spec)
+    return package_specs
+
+
+def _issue_commands(command, specs, rollup_commands=False):
+    if not specs:
+        return
+
+    if rollup_commands:
+        yield f"{command} {' '.join(package_spec for package_spec in specs)}"
+    else:
+        for package_spec in specs:
+            yield f"{command} {package_spec}"
+
+
+def ensure_single_packages(
+    host,
+    packages: Union[list[str], set[str]],
+    current_packages: dict[str, str],
+    present: bool,
+    upgrade_to_latest: bool,
+    install_command: str,
+    uninstall_command: str,
+    upgrade_command: str,
+    latest: str = "",
+    spec_version_join: str = "=",
+    command_version_join: str = "=",
+    rollup_commands: bool = True,
+):
+    """
+    Handles this common scenario:
+
+    + We have a list of packages(/version) to ensure
+    + We have a map of existing package -> version
+    + We have the common command bits (install, uninstall, version "joiner")
+    + Outputs commands to ensure our desired packages/versions
+    + Optionally upgrades packages w/o specified version when present
+    + Only a single version of the same package can be installed simultaneously
+
+    Args:
+        packages: list of packages or package/versions
+        current_packages: dict of package names to currently installed versions
+        present: whether packages should exist or not
+        upgrade_to_latest: upgrade a package if the version is unspecified
+        install_command: command to prefix to packages to install
+        uninstall_command: as above, but for uninstalling packages
+        latest: the string used to indicate to the package manager to install the latest version
+        spec_version_join: the "joiner" for specifying versions, ie ``=`` for ``<package>=<version>``
+        command_version_join: the "joiner" for installing versions, ie ``=`` for ``<package>=<version>``. A single space
+          will be interpreted to mean that the version is a second argument.
+        rollup_commands: whether to issue a single command for all changes or multiple
+    """
+    if not packages:
+        return
+
+    if isinstance(packages, str):
+        packages = [packages]
+
+    desired_packages = {}
+    for package in packages:
+        package_name, package_version = parse_package_version(
+            package, version_join=spec_version_join, latest=latest
+        )
+        desired_packages[package_name] = package_version
+
+    diff_packages = []
+    upgrade_packages = []
+    noop_packages = []
+
+    for package_name, desired_version in desired_packages.items():
+        if package_name not in current_packages:
+            diff_packages.append((package_name, package_version))
+        elif package_version != current_packages[package_name] and present:
+            if package_version == latest and not upgrade_to_latest:
+                noop_packages.append((package_name, package_version))
+                continue
+            upgrade_packages.append((package_name, package_version))
+        else:
+            noop_packages.append((package_name, package_version))
+
+    # when declaring unwanted packages, we can simply swap the operations around
+    if not present:
+        diff_packages, noop_packages = noop_packages, diff_packages
+
+    # Emit noop messages
+    for package_name, package_version in noop_packages:
+        if present:
+            host.noop(f"package {package_name} {package_version} already installed")
+        else:
+            host.noop(f"package {package_name} {package_version} is not installed")
+
+    # figure out the quoting
+    diff_specs = _quote_package_spec(diff_packages, command_version_join)
+    upgrade_specs = _quote_package_spec(upgrade_packages, command_version_join)
+
+    command = install_command if present else uninstall_command
+    yield _issue_commands(
+        command=command, specs=diff_specs, rollup_commands=rollup_commands
+    )
+    yield _issue_commands(
+        command=upgrade_command, specs=upgrade_specs, rollup_commands=rollup_commands
+    )
+
+    for package_name, package_version in diff_packages:
+        if present:
+            current_packages[package_name] = package_version
+        else:
+            current_packages.pop(package_name)
+
+    for package_name, package_version in upgrade_packages:
+        current_packages[package_name] = package_version
+
+
+def ensure_multi_packages(
+    host,
+    packages: Union[list[str], set[str]],
+    current_packages: dict[str, set[str]],
+    present: bool,
+    install_command: str,
+    uninstall_command: str,
+    latest: str = "",
+    spec_version_join: str = "=",
+    command_version_join: str = "=",
+    rollup_commands: bool = True,
+):
+    """
+    Handles this common scenario:
+
+    + We have a list of packages(/version) to ensure
+    + We have a map of existing package -> version
+    + We have the common command bits (install, uninstall, version "joiner")
+    + Outputs commands to ensure our desired packages/versions
+    + Optionally upgrades packages w/o specified version when present
+    + Multiple versions of the same package can be installed simultaneously
+
+    Args:
+        packages: list of packages or package/versions
+        current_packages: dict of package names to currently installed versions
+        present: whether packages should exist or not
+        install_command: command to prefix to packages to install
+        uninstall_command: as above, but for uninstalling packages
+        latest: the string used to indicate to the package manager to install the latest version
+        spec_version_join: the "joiner" for specifying versions, ie ``=`` for ``<package>=<version>``
+        command_version_join: the "joiner" for installing versions, ie ``=`` for ``<package>=<version>``. A single space
+          will be interpreted to mean that the version is a second argument.
+        rollup_commands: whether to issue a single command for all changes or multiple
+    """
+    if not packages:
+        return
+
+    if isinstance(packages, str):
+        packages = [packages]
+
+    desired_packages: dict[str, set[str]] = {}
+    for package in packages:
+        package_name, package_version = parse_package_version(
+            package, version_join=spec_version_join, latest=latest
+        )
+        desired_packages.setdefault(package_name, set()).add(package_version)
+
+    diff_packages = []
+    noop_packages = []
+
+    for package_name, desired_versions in desired_packages.items():
+        current_versions = current_packages.get(package_name, set())
+        diff_versions = desired_versions - current_versions
+        noop_versions = desired_versions & current_versions
+        diff_packages += [(package_name, version) for version in diff_versions]
+        noop_packages += [(package_name, version) for version in noop_versions]
+
+    # when declaring unwanted packages, we can simply swap the operations around
+    if not present:
+        diff_packages, noop_packages = noop_packages, diff_packages
+
+    # Emit noop messages
+    for package_name, package_version in noop_packages:
+        if present:
+            host.noop(f"package {package_name} {package_version} already installed")
+        else:
+            host.noop(f"package {package_name} {package_version} is not installed")
+
+    # figure out the quoting
+    diff_specs = _quote_package_spec(diff_packages, command_version_join)
+
+    command = install_command if present else uninstall_command
+    yield _issue_commands(
+        command=command, specs=diff_specs, rollup_commands=rollup_commands
+    )
+
+    for package_name, package_version in diff_packages:
+        if present:
+            current_packages.setdefault(package_name, set()).add(package_version)
+        else:
+            current_packages.get(package_name, set()).discard(package_version)
+
+
+def ensure_versionless_packages(
+    host,
+    packages: Union[list[str], set[str]],
+    current_packages: set[str],
+    present: bool,
+    install_command: str,
+    uninstall_command: str,
+    rollup_commands: bool = True,
+):
+    """
+    Handles this common scenario:
+
+    + We have a list of packages to ensure
+    + We have a list of existing packages
+    + We have the common command bits (install, uninstall)
+    + Outputs commands to ensure our desired packages
+
+    Args:
+        packages: list of packages or package/versions
+        current_packages: fact returning list of package names
+        present: whether packages should exist or not
+        install_command: command to prefix to list of packages to install
+        uninstall_command: as above for uninstalling packages
+        rollup_commands: whether to issue a single command for all changes or multiple
+    """
+    if not packages:
+        return
+
+    if isinstance(packages, str):
+        packages = [packages]
+
+    desired_packages = set(packages)
+
+    diff_packages = desired_packages - current_packages
+    noop_packages = desired_packages & current_packages
+
+    if not present:
+        diff_packages, noop_packages = noop_packages, diff_packages
+
+    for package in noop_packages:
+        if present:
+            host.noop(f"package {package} already installed")
+        else:
+            host.noop(f"package {package} not installed")
+
+    diff_specs = [shlex.quote(package) for package in diff_packages]
+
+    command = install_command if present else uninstall_command
+    yield _issue_commands(
+        command=command, specs=diff_specs, rollup_commands=rollup_commands
+    )
+
+    if present:
+        current_packages.update(diff_packages)
+    else:
+        current_packages.difference_update(diff_packages)
 
 
 def _has_package(package, packages, expand_package_fact=None, match_any=False):
