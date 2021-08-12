@@ -1,0 +1,14 @@
+{
+    "args": [["docker-compose=1.29.2"]],
+    "kwargs": {
+        "present": false
+    },
+    "facts": {
+        "pipx.PipxApplications": {
+            "docker-compose": "1.29.2"
+        }
+    },
+    "commands": [
+        "pipx uninstall docker-compose=1.29.2"
+    ]
+}

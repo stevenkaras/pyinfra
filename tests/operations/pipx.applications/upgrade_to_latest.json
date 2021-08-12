@@ -1,0 +1,14 @@
+{
+    "args": [["docker-compose"]],
+    "kwargs": {
+        "upgrade_to_latest": true
+    },
+    "facts": {
+        "pipx.PipxApplications": {
+            "docker-compose": "1.29.2"
+        }
+    },
+    "commands": [
+        "pipx upgrade docker-compose"
+    ]
+}

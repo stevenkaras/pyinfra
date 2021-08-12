@@ -1,0 +1,11 @@
+{
+    "args": [["docker-compose=1.29.2"]],
+    "facts": {
+        "pipx.PipxApplications": {
+            "docker-compose": "1.29.2"
+        }
+    },
+    "commands": [
+    ],
+    "noop_description": "package docker-compose 1.29.2 already installed"
+}

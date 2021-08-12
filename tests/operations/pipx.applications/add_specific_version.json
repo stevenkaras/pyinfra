@@ -1,0 +1,11 @@
+{
+    "args": [["docker-compose=1.29.2"]],
+    "facts": {
+        "pipx.PipxApplications": {
+            "pyinfra": "1.0"
+        }
+    },
+    "commands": [
+        "pipx install docker-compose=1.29.2"
+    ]
+}

@@ -1,0 +1,33 @@
+{
+    "command": "pipx list",
+    "output": [
+        "venvs are in /home/user/.local/pipx/venvs",
+        "apps are exposed on your $PATH at /home/user/.local/bin",
+        "   package black 21.7b0, Python 3.9.6",
+        "    - black",
+        "    - black-primer",
+        "    - blackd",
+        "   package checkov 2.0.338, Python 3.9.6",
+        "    - checkov",
+        "    - checkov.cmd",
+        "   package flake8 3.9.2, Python 3.9.6",
+        "    - flake8",
+        "   package pycodestyle 2.7.0, Python 3.9.6",
+        "    - pycodestyle",
+        "   package pyflakes 2.3.1, Python 3.9.6",
+        "    - pyflakes",
+        "   package sphinx 4.1.2, Python 3.9.6",
+        "    - sphinx-apidoc",
+        "    - sphinx-autogen",
+        "    - sphinx-build",
+        "    - sphinx-quickstart"
+    ],
+    "fact": {
+        "black": ["21.7b0"],
+        "checkov": ["2.0.338"],
+        "flake8": ["3.9.2"],
+        "pycodestyle": ["2.7.0"],
+        "pyflakes": ["2.3.1"],
+        "sphinx": ["4.1.2"]
+    }
+}
