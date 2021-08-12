@@ -7,5 +7,6 @@
     },
     "commands": [
         "pipx upgrade-all"
-    ]
+    ],
+    "idempotent": false
 }
