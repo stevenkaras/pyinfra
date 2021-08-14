@@ -11,7 +11,7 @@ from pyinfra.facts.brew import (
     new_cask_cli,
 )
 
-from .util.packaging import ensure_packages
+from .util.packaging import ensure_packages, ensure_single_packages
 
 
 @operation(is_idempotent=False)
@@ -79,13 +79,17 @@ def packages(
     if upgrade:
         yield _upgrade(state=state, host=host)
 
-    yield ensure_packages(
-        host, packages, host.get_fact(BrewPackages), present,
-        install_command='brew install',
-        uninstall_command='brew uninstall',
-        upgrade_command='brew upgrade',
-        version_join='@',
-        latest=latest,
+    yield ensure_single_packages(
+        host=host,
+        packages=packages,
+        current_packages=host.get_fact(BrewPackages),
+        present=present,
+        upgrade_to_latest=latest,
+        install_command="brew install",
+        uninstall_command="brew uninstall",
+        upgrade_command="brew upgrade",
+        spec_version_join="@",
+        command_version_join="@",
     )
 
 
