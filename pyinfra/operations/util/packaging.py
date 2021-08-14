@@ -155,11 +155,15 @@ def ensure_single_packages(
 
     for package_name, package_version in diff_packages:
         if present:
+            if package_version == latest:
+                package_version = "unknown"
             current_packages[package_name] = package_version
         else:
             current_packages.pop(package_name)
 
     for package_name, package_version in upgrade_packages:
+        if package_version == latest:
+            package_version = "unknown"
         current_packages[package_name] = package_version
 
 
