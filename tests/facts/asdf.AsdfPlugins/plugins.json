@@ -1,0 +1,14 @@
+{
+    "command": "asdf plugin list",
+    "requires_command": "asdf",
+    "output": [
+        "nodejs",
+        "python",
+        "ruby"
+    ],
+    "fact": [
+        "nodejs",
+        "python",
+        "ruby"
+    ]
+}

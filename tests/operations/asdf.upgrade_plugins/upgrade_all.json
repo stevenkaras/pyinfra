@@ -1,0 +1,10 @@
+{
+    "args": [],
+    "facts": {
+        "asdf.AsdfPlugins": []
+    },
+    "commands": [
+        "asdf plugin update --all"
+    ],
+    "idempotent": false
+}

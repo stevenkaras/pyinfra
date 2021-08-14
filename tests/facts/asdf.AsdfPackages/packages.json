@@ -1,0 +1,22 @@
+{
+    "command": "asdf list",
+    "requires_command": "asdf",
+    "output": [
+        "golang",
+        "  No versions installed",
+        "nodejs",
+        "  14.16.1",
+        "  16.1.0",
+        "python",
+        "  3.9.6",
+        "ruby",
+        "  2.4.9",
+        "  3.0.2"
+    ],
+    "fact": {
+        "golang": [],
+        "nodejs": ["14.16.1", "16.1.0"],
+        "python": ["3.9.6"],
+        "ruby": ["2.4.9", "3.0.2"]
+    }
+}

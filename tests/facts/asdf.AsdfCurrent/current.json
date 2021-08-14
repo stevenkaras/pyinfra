@@ -1,0 +1,15 @@
+{
+    "command": "asdf current",
+    "requires_command": "asdf",
+    "output": [
+        "golang          ______          No version set. Run \"asdf <global|shell|local> golang <version>\"",
+        "nodejs          16.1.0          /home/user/.tool-versions",
+        "python          3.9.6           /home/user/.tool-versions",
+        "ruby            3.0.2           /home/user/.tool-versions"
+    ],
+    "fact": {
+        "nodejs": "16.1.0",
+        "python": "3.9.6",
+        "ruby": "3.0.2"
+    }
+}
