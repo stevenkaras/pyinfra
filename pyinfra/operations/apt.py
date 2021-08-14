@@ -325,6 +325,23 @@ def update(cache_time=None, touch_periodic=False, state=None, host=None):
 _update = update  # noqa: E305
 
 
+@operation(is_idempotent=False)
+def dist_upgrade(state, host):
+    """
+    Upgrades all apt packages while maintaining dependency closures.
+
+    Example:
+
+    .. code:: python
+
+        apt.dist_upgrade(
+            name='Upgrade apt packages',
+        )
+    """
+
+    yield noninteractive_apt("dist-upgrade")
+
+
 @operation
 def upgrade(state, host):
     '''
