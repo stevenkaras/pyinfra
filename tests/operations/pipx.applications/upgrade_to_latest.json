@@ -5,10 +5,13 @@
     },
     "facts": {
         "pipx.PipxApplications": {
-            "docker-compose": "1.29.2"
         }
     },
     "commands": [
+        "pipx install docker-compose"
+    ],
+    "second_output_commands": [
         "pipx upgrade docker-compose"
-    ]
+    ],
+    "idempotent": false
 }
