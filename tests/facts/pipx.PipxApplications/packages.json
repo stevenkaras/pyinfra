@@ -1,5 +1,6 @@
 {
     "command": "pipx list",
+    "requires_command": "pipx",
     "output": [
         "venvs are in /home/user/.local/pipx/venvs",
         "apps are exposed on your $PATH at /home/user/.local/bin",
