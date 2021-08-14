@@ -3,7 +3,7 @@ from pyinfra.facts.pipx import PipxApplications
 from .util.packaging import ensure_single_packages
 
 
-@operation
+@operation(is_idempotent=False)
 def upgrade(state=None, host=None):
     """
     Upgrades all pipx applications.
